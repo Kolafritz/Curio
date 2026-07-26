@@ -5,15 +5,8 @@ app, but every card is real content on topics you chose — pulled live from
 public sources. Nothing is pre-written into the app; it's fetched fresh each
 time you scroll.
 
-## Deploying it (pick one, all free)
+## Deploying it
 
-Service workers (needed for offline + installability) only run on a real
-HTTPS origin or `localhost` — not from a sandbox preview or a `file://` path.
-Deploy the whole `curio/` folder as-is (it's plain static files, no
-build step) to any of:
-
-- **Netlify Drop** — go to https://app.netlify.com/drop and drag the folder in. Done in ~10 seconds.
-- **Vercel** — `npx vercel` from inside the folder, or drag-and-drop on vercel.com.
 - **GitHub Pages** — push the folder to a repo, then enable Pages on the `main` branch in repo settings.
 
 Once it's live, open the URL on your phone and use "Add to Home Screen"
