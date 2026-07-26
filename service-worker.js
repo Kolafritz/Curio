@@ -5,7 +5,7 @@
 //   images (mostly Wikipedia thumbnails)   -> cache-first
 //   everything else (e.g. Google Fonts)    -> stale-while-revalidate
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const SHELL_CACHE = `curio-shell-${VERSION}`;
 const RUNTIME_CACHE = `curio-runtime-${VERSION}`;
 const IMAGE_CACHE = `curio-images-${VERSION}`;
@@ -58,7 +58,10 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(req).then((cached) => {
         const network = fetch(req).then((res) => {
-          if (res && res.ok) caches.open(SHELL_CACHE).then((c) => c.put(req, res.clone()));
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(SHELL_CACHE).then((c) => c.put(req, copy));
+          }
           return res;
         }).catch(() => cached);
         return cached || network;
@@ -71,7 +74,10 @@ self.addEventListener('fetch', (event) => {
   if (isApiRequest(url)) {
     event.respondWith(
       fetch(req).then((res) => {
-        if (res && res.ok) caches.open(RUNTIME_CACHE).then((c) => c.put(req, res.clone()));
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
+        }
         return res;
       }).catch(() => caches.match(req))
     );
@@ -82,7 +88,10 @@ self.addEventListener('fetch', (event) => {
   if (req.destination === 'image') {
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req).then((res) => {
-        if (res && res.ok) caches.open(IMAGE_CACHE).then((c) => c.put(req, res.clone()));
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(IMAGE_CACHE).then((c) => c.put(req, copy));
+        }
         return res;
       }).catch(() => cached))
     );
@@ -93,7 +102,10 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req).then((res) => {
-        if (res && res.ok) caches.open(RUNTIME_CACHE).then((c) => c.put(req, res.clone()));
+        if (res && res.ok) {
+          const copy = res.clone();
+          caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
+        }
         return res;
       }).catch(() => cached);
       return cached || network;
