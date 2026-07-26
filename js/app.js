@@ -1,6 +1,6 @@
 // app.js — wires the topic drawer, persisted preferences, and feed together.
 
-import { TOPICS } from './topics.js';
+import { TOPICS, addCustomTopic, removeCustomTopic } from './topics.js';
 import { initFeed, startFeed, setActiveTopics } from './feed.js';
 
 const ACTIVE_KEY = 'curio_active_topics_v1';
@@ -34,10 +34,12 @@ function showToast(msg) {
 function renderDrawerList() {
   topicList.innerHTML = '';
   for (const topic of TOPICS) {
-    const row = document.createElement('button');
-    row.type = 'button';
+    const row = document.createElement('div');
     row.className = 'topic-row' + (active.has(topic.id) ? ' active' : '');
     row.dataset.id = topic.id;
+    row.tabIndex = 0;
+    row.setAttribute('role', 'button');
+    row.setAttribute('aria-pressed', active.has(topic.id) ? 'true' : 'false');
 
     const swatch = document.createElement('div');
     swatch.className = 'swatch';
@@ -49,21 +51,53 @@ function renderDrawerList() {
     name.className = 'name';
     name.textContent = topic.label;
 
-    const toggle = document.createElement('div');
-    toggle.className = 'toggle';
-
     row.appendChild(swatch);
     row.appendChild(name);
+
+    if (topic.custom) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'topic-delete';
+      del.setAttribute('aria-label', `Remove ${topic.label}`);
+      del.textContent = '✕';
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeCustomTopic(topic.id);
+        active.delete(topic.id);
+        renderDrawerList();
+      });
+      row.appendChild(del);
+    }
+
+    const toggle = document.createElement('div');
+    toggle.className = 'toggle';
     row.appendChild(toggle);
 
-    row.addEventListener('click', () => {
+    const toggleActive = () => {
       if (active.has(topic.id)) active.delete(topic.id);
       else active.add(topic.id);
       row.classList.toggle('active');
+      row.setAttribute('aria-pressed', active.has(topic.id) ? 'true' : 'false');
+    };
+    row.addEventListener('click', toggleActive);
+    row.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleActive(); }
     });
 
     topicList.appendChild(row);
   }
+}
+
+function handleAddTopic() {
+  const nameInput = document.getElementById('newTopicName');
+  const seedsInput = document.getElementById('newTopicSeeds');
+  const topic = addCustomTopic(nameInput.value, seedsInput.value);
+  if (!topic) { showToast('Enter a topic name first'); return; }
+  active.add(topic.id);
+  nameInput.value = '';
+  seedsInput.value = '';
+  renderDrawerList();
+  showToast(`Added "${topic.label}"`);
 }
 
 function openDrawer() {
@@ -102,6 +136,10 @@ document.getElementById('selectAll').addEventListener('click', () => {
 document.getElementById('clearAll').addEventListener('click', () => {
   active = new Set();
   renderDrawerList();
+});
+document.getElementById('addTopicBtn').addEventListener('click', handleAddTopic);
+document.getElementById('newTopicSeeds').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); handleAddTopic(); }
 });
 drawer.addEventListener('click', (e) => { if (e.target === drawer) { closeDrawer(); applySelection(); } });
 

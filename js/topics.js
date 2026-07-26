@@ -192,3 +192,59 @@ export const TOPICS = [
 ];
 
 export const TOPIC_MAP = Object.fromEntries(TOPICS.map(t => [t.id, t]));
+
+// ----- custom topics: user-added subjects, no code changes needed -----
+// Stored separately from the built-ins above and merged into TOPICS/TOPIC_MAP
+// at load time, so feed.js and sources.js (which only know about wiki-kind
+// topics) treat them identically to any built-in Wikipedia topic.
+
+const CUSTOM_KEY = 'curio_custom_topics_v1';
+const CUSTOM_INKS = ['#4B6584', '#5C4B84', '#84644B', '#4B8471', '#844B6D', '#6D844B', '#4B6E84', '#7A4B84'];
+
+function loadCustomTopics() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveCustomTopics() {
+  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(TOPICS.filter(t => t.custom))); } catch {}
+}
+function registerTopic(topic) {
+  TOPICS.push(topic);
+  TOPIC_MAP[topic.id] = topic;
+}
+function slugify(name) {
+  return 'custom-' + (name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'topic');
+}
+
+for (const t of loadCustomTopics()) registerTopic(t);
+
+export function addCustomTopic(name, seedsInput) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return null;
+  let id = slugify(trimmed);
+  if (TOPIC_MAP[id]) id += '-' + Date.now().toString(36);
+  const seeds = (seedsInput || '').split(',').map(s => s.trim()).filter(Boolean);
+  const customCount = TOPICS.filter(t => t.custom).length;
+  const topic = {
+    id,
+    label: trimmed,
+    short: trimmed.length > 16 ? trimmed.slice(0, 15) + '…' : trimmed,
+    ink: CUSTOM_INKS[customCount % CUSTOM_INKS.length],
+    glyph: trimmed[0].toUpperCase(),
+    kind: 'wiki',
+    seeds: seeds.length ? seeds : [trimmed],
+    custom: true
+  };
+  registerTopic(topic);
+  saveCustomTopics();
+  return topic;
+}
+
+export function removeCustomTopic(id) {
+  const idx = TOPICS.findIndex(t => t.id === id && t.custom);
+  if (idx === -1) return false;
+  TOPICS.splice(idx, 1);
+  delete TOPIC_MAP[id];
+  saveCustomTopics();
+  return true;
+}
