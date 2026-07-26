@@ -5,7 +5,7 @@
 //   images (mostly Wikipedia thumbnails)   -> cache-first
 //   everything else (e.g. Google Fonts)    -> stale-while-revalidate
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const SHELL_CACHE = `curio-shell-${VERSION}`;
 const RUNTIME_CACHE = `curio-runtime-${VERSION}`;
 const IMAGE_CACHE = `curio-images-${VERSION}`;
@@ -63,7 +63,7 @@ self.addEventListener('fetch', (event) => {
             caches.open(SHELL_CACHE).then((c) => c.put(req, copy));
           }
           return res;
-        }).catch(() => cached);
+        }).catch(() => cached || Response.error());
         return cached || network;
       })
     );
@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
         }
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(() => caches.match(req).then((cached) => cached || Response.error()))
     );
     return;
   }
@@ -93,7 +93,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(IMAGE_CACHE).then((c) => c.put(req, copy));
         }
         return res;
-      }).catch(() => cached))
+      }).catch(() => cached || Response.error()))
     );
     return;
   }
@@ -107,7 +107,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(RUNTIME_CACHE).then((c) => c.put(req, copy));
         }
         return res;
-      }).catch(() => cached);
+      }).catch(() => cached || Response.error());
       return cached || network;
     })
   );
