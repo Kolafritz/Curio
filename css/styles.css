@@ -212,16 +212,18 @@ button {
   perspective: 1600px;
 }
 
-/* left "index tab" — signature element, doubles as topic-drawer trigger */
+/* index tab — signature element, doubles as topic-drawer trigger. Sits in the
+   text panel's top-right corner (not over the photo) so it's always legible
+   against the panel's own surface, in both themes. */
 .tab {
   position: absolute;
-  left: 0;
-  top: 96px;
-  z-index: 20;
+  top: 0;
+  right: 0;
+  z-index: 5;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   padding: 10px 6px;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 0 0 10px;
   font-family: var(--font-mono);
   font-size: 0.62rem;
   letter-spacing: 0.1em;
@@ -229,8 +231,17 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: rgba(20,20,18,0.86);
-  box-shadow: 3px 3px 10px rgba(0,0,0,0.35);
+  color: #fff;
+  box-shadow: -2px 3px 8px rgba(0,0,0,0.15);
+}
+/* the back face has no media section above it, so its panel starts at the
+   very top of the card — flush with the topbar overlay. Push the tab down
+   to clear it (front/direct panels already start below the media, well
+   past the topbar, so they don't need this). */
+.face.back .tab {
+  top: calc(var(--safe-top) + 56px);
+  right: 14px;
+  border-radius: 10px;
 }
 
 .card-inner {
@@ -254,7 +265,6 @@ button {
   overflow: hidden;
 }
 .face.back { transform: rotateY(180deg); }
-.face.back .panel { align-items: center; text-align: center; }
 
 /* media plate */
 .media {
@@ -376,10 +386,18 @@ button {
 .tap-zone { position: absolute; inset: 0; z-index: 1; }
 .panel, .actions, .source-link { position: relative; z-index: 2; }
 
-/* front face for flip-mode cards: centered invitation */
-.face.front.flip-mode .panel {
-  align-items: center;
+/* "tap to reveal" content (both the cover invitation and the revealed note):
+   centered in the middle of the available space, independent of the
+   actions row below it (which uses margin-top:auto to stay pinned to the
+   bottom — without this wrapper, that auto-margin eats the free space
+   before justify-content ever gets a chance to center anything). */
+.reveal-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
   text-align: center;
 }
 .face.front.flip-mode .title { font-size: 1.7rem; }

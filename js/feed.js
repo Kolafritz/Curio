@@ -129,20 +129,23 @@ function buildActions(card, faceEl) {
   faceEl.appendChild(actions);
 }
 
+function buildTab(topic) {
+  const tab = el('div', 'tab', `${topic.glyph} ${topic.short}`);
+  tab.style.background = topic.ink;
+  return tab;
+}
+
 function buildDirectCard(card, topic) {
   const wrap = el('div', 'card');
   wrap.dataset.topic = topic.id;
   wrap.dataset.cardId = card.id;
-
-  const tab = el('div', 'tab', `${topic.glyph} ${topic.short}`);
-  tab.style.background = topic.ink;
-  wrap.appendChild(tab);
 
   const inner = el('div', 'card-inner');
   const face = el('div', 'face front');
   face.appendChild(buildMedia(card, topic));
 
   const panel = el('div', 'panel');
+  panel.appendChild(buildTab(topic));
   panel.appendChild(el('div', 'title', card.title));
   const body = el('p', 'body-text', card.body);
   panel.appendChild(body);
@@ -160,18 +163,17 @@ function buildFlipCard(card, topic) {
   wrap.dataset.topic = topic.id;
   wrap.dataset.cardId = card.id;
 
-  const tab = el('div', 'tab', `${topic.glyph} ${topic.short}`);
-  tab.style.background = topic.ink;
-  wrap.appendChild(tab);
-
   const inner = el('div', 'card-inner');
 
   // front — the "cover"
   const front = el('div', 'face front flip-mode');
   front.appendChild(buildMedia(card, topic));
   const frontPanel = el('div', 'panel');
-  frontPanel.appendChild(el('div', 'title', card.title));
-  frontPanel.appendChild(el('p', 'teaser', card.teaser));
+  frontPanel.appendChild(buildTab(topic));
+  const frontContent = el('div', 'reveal-content');
+  frontContent.appendChild(el('div', 'title', card.title));
+  frontContent.appendChild(el('p', 'teaser', card.teaser));
+  frontPanel.appendChild(frontContent);
   frontPanel.appendChild(el('div', 'flip-hint', 'Tap to reveal'));
   front.appendChild(frontPanel);
   inner.appendChild(front);
@@ -180,14 +182,16 @@ function buildFlipCard(card, topic) {
   const back = el('div', 'face back');
   back.style.background = `linear-gradient(165deg, ${topic.ink}22, var(--surface) 55%)`;
   const backPanel = el('div', 'panel');
-  backPanel.style.justifyContent = 'center';
-  backPanel.appendChild(el('div', 'meta-line', card.sourceLabel));
+  backPanel.appendChild(buildTab(topic));
+  const backContent = el('div', 'reveal-content');
+  backContent.appendChild(el('div', 'meta-line', card.sourceLabel));
   const quote = el('p', 'body-text', card.body);
   quote.style.fontFamily = 'var(--font-display)';
   quote.style.fontSize = '1.2rem';
   quote.style.lineHeight = '1.5';
-  backPanel.appendChild(quote);
-  if (card.meta) backPanel.appendChild(el('div', 'meta-line', card.meta));
+  backContent.appendChild(quote);
+  if (card.meta) backContent.appendChild(el('div', 'meta-line', card.meta));
+  backPanel.appendChild(backContent);
   back.appendChild(backPanel);
   buildActions(card, backPanel);
   inner.appendChild(back);
