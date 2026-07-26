@@ -101,6 +101,7 @@ function handleAddTopic() {
 }
 
 function openDrawer() {
+  if (active.size === 0) active = new Set(TOPICS.map(t => t.id));
   renderDrawerList();
   drawer.classList.add('open');
   drawer.setAttribute('aria-hidden', 'false');
