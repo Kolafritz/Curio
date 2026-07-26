@@ -32,6 +32,32 @@ async function safeJson(url) {
   return res.json();
 }
 
+// Wikipedia/Commons thumbnail URLs embed their width, e.g. ".../320px-Foo.jpg" —
+// request a larger rendition of the same source image for a crisper display.
+function upsizeThumbnail(url, width = 640) {
+  if (!url) return null;
+  return url.replace(/\/(\d+)px-/, `/${width}px-`);
+}
+
+// Fallback image source for cards whose primary API has no photo of its own
+// (quotes, vocab, research abstracts) or whose Wikipedia article lacks a
+// thumbnail — searches Wikimedia Commons, which is free, keyless, and CORS-enabled.
+async function fetchCommonsImage(query) {
+  if (!query) return null;
+  try {
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=6&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*`;
+    const data = await safeJson(url);
+    const pages = Object.values(data.query?.pages || {});
+    const photos = pages
+      .map(p => p.imageinfo?.[0]?.thumburl)
+      .filter(u => u && /\.(jpe?g|png)(\?|$)/i.test(u));
+    if (!photos.length) return null;
+    return pick(photos);
+  } catch {
+    return null;
+  }
+}
+
 // ---------- Wikipedia ----------
 
 async function wikiSearchTitles(term, lang = 'en', limit = 6) {
@@ -61,6 +87,8 @@ export async function fetchWikiCard(topic) {
   const teaser = sentences.slice(0, 1).join(' ');
   const body = summary.extract;
 
+  const image = upsizeThumbnail(summary.thumbnail?.source) || await fetchCommonsImage(summary.title);
+
   return {
     id: uid(),
     topicId: topic.id,
@@ -68,7 +96,7 @@ export async function fetchWikiCard(topic) {
     title: summary.title,
     teaser,
     body,
-    image: summary.thumbnail?.source || null,
+    image,
     sourceLabel: 'Wikipedia',
     sourceUrl: summary.content_urls?.desktop?.page || null,
     meta: summary.description || ''
@@ -90,6 +118,7 @@ export async function fetchOnThisDayCard(topic) {
   markSeen('otd:' + ev.year + ev.text.slice(0, 20));
 
   const page = ev.pages?.[0];
+  const image = upsizeThumbnail(page?.thumbnail?.source) || await fetchCommonsImage(page?.titles?.normalized);
   return {
     id: uid(),
     topicId: topic.id,
@@ -97,7 +126,7 @@ export async function fetchOnThisDayCard(topic) {
     title: `On this day, ${ev.year}`,
     teaser: page?.titles?.normalized || 'Tap to reveal what happened',
     body: ev.text,
-    image: page?.thumbnail?.source || null,
+    image,
     sourceLabel: 'Wikipedia — On This Day',
     sourceUrl: page?.content_urls?.desktop?.page || null,
     meta: ''
@@ -133,7 +162,7 @@ export async function fetchStoicCard(topic) {
       title: page,
       teaser: 'Tap to reveal',
       body: quote,
-      image: null,
+      image: await fetchCommonsImage(page),
       sourceLabel: 'Wikiquote — ' + page,
       sourceUrl: `https://en.wikiquote.org/wiki/${encodeURIComponent(page)}`,
       meta: ''
@@ -147,7 +176,7 @@ export async function fetchStoicCard(topic) {
       title: q.author,
       teaser: 'Tap to reveal',
       body: q.text,
-      image: null,
+      image: await fetchCommonsImage(q.author),
       sourceLabel: `${q.work}, ${q.translator}`,
       sourceUrl: null,
       meta: ''
@@ -177,7 +206,7 @@ async function semanticScholarCard(topic) {
     title: paper.title,
     teaser: abstract.split(/(?<=[.!?])\s+/)[0],
     body: abstract,
-    image: null,
+    image: await fetchCommonsImage(term),
     sourceLabel: 'Semantic Scholar research',
     sourceUrl: paper.url || null,
     meta: `${authors}${paper.year ? ' · ' + paper.year : ''}`
@@ -198,12 +227,13 @@ export async function fetchResearchCard(topic) {
 
 // ---------- Curated vocab (German / Korean) ----------
 
-function vocabCard(topic, list) {
+async function vocabCard(topic, list) {
   const fresh = list.filter((_, i) => !isSeen(`vocab:${topic.id}:${i}`));
   const pool = fresh.length ? fresh : list;
   const idx = list.indexOf(pick(pool));
   markSeen(`vocab:${topic.id}:${idx}`);
   const item = list[idx];
+  const image = (await fetchCommonsImage(item.term)) || (await fetchCommonsImage(topic.label));
   return {
     id: uid(),
     topicId: topic.id,
@@ -211,7 +241,7 @@ function vocabCard(topic, list) {
     title: item.term,
     teaser: item.lit,
     body: item.mean,
-    image: null,
+    image,
     sourceLabel: topic.label,
     sourceUrl: null,
     meta: ''
