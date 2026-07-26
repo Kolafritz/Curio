@@ -141,6 +141,20 @@ export const TOPICS = [
       'creatine supplementation exercise', 'exercise recovery muscle soreness']
   },
   {
+    id: 'nutrition',
+    label: 'Nutrition & Flexible Dieting',
+    short: 'Nutrition',
+    ink: '#6B8E4E',
+    glyph: '⚗',
+    kind: 'mixed-research',
+    seeds: ['Flexible dieting', 'If It Fits Your Macros', 'Nutrient timing', 'Macronutrient',
+      'Caloric deficit', 'Protein (nutrient)', 'Dietary fiber', 'Sports nutrition',
+      'Diet quality', 'Intuitive eating', 'Meal frequency', 'Micronutrient'],
+    researchTerms: ['flexible dieting adherence', 'protein intake body composition',
+      'nutrient timing exercise performance', 'caloric restriction weight loss',
+      'diet adherence long term outcomes']
+  },
+  {
     id: 'tennis',
     label: 'Improving Your Tennis Game',
     short: 'Tennis',
@@ -175,9 +189,13 @@ export const TOPICS = [
     short: 'Beer',
     ink: '#C08A2E',
     glyph: '☗',
-    kind: 'wiki',
-    seeds: ['Beer', 'History of beer', 'Brewing', 'Hops', 'Lager', 'Ale',
-      'India pale ale', 'Trappist beer', 'Reinheitsgebot', 'Fermentation in food processing']
+    kind: 'mixed-research',
+    seeds: ['History of beer', 'Ancient Egyptian brewing', 'Beer in Mesopotamia', 'Sumerian beer',
+      'Medieval brewing', 'Trappist beer', 'Reinheitsgebot', 'Craft beer movement', 'Homebrewing',
+      'Beer style', 'India pale ale', 'Lager', 'Sour beer', 'Hops', 'Brewing', 'Barley malt',
+      'Beer tasting'],
+    researchTerms: ['brewing fermentation science', 'hop chemistry beer flavor',
+      'yeast fermentation beer', 'beer sensory analysis tasting']
   },
   {
     id: 'honey',
@@ -185,9 +203,12 @@ export const TOPICS = [
     short: 'Honey',
     ink: '#CBA135',
     glyph: '⬡',
-    kind: 'wiki',
-    seeds: ['Honey', 'Beekeeping', 'Honey bee', 'Mead', 'Honeycomb', 'Apiary',
-      'Manuka honey', 'Pollination', 'Queen bee', 'Royal jelly']
+    kind: 'mixed-research',
+    seeds: ['History of beekeeping', 'Ancient Egyptian apiculture', 'Mead', 'Tej (drink)',
+      'Beekeeping', 'Urban beekeeping', 'Honey bee', 'Honeycomb', 'Apiary', 'Manuka honey',
+      'Varietal honey', 'Honey tasting', 'Pollination', 'Queen bee', 'Royal jelly'],
+    researchTerms: ['honey bee foraging behavior', 'honey antimicrobial properties',
+      'honey botanical origin authentication', 'beekeeping colony health']
   }
 ];
 

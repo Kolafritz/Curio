@@ -32,6 +32,7 @@
     <div class="brand">Curio <small>curiosities</small></div>
     <div style="display:flex; gap:8px;">
       <button id="installBtn" class="icon-btn" hidden aria-label="Install app" title="Install app">⇩</button>
+      <button id="surpriseBtn" class="icon-btn" aria-label="Surprise me" title="Surprise me">🔀</button>
       <button id="topicsBtn" class="icon-btn" aria-label="Choose topics" title="Choose topics">☰</button>
     </div>
   </header>
@@ -51,6 +52,7 @@
       <div class="view-head">
         <h1>Saved</h1>
         <div class="view-sub">Cards you've kept, ready for offline reading</div>
+        <input id="savedSearch" class="saved-search" type="search" placeholder="Search saved cards…" hidden>
       </div>
       <div id="savedList" class="saved-list"></div>
       <div id="savedEmpty" class="empty-state" hidden>

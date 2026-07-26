@@ -45,12 +45,15 @@ function upsizeThumbnail(url, width = 640) {
 async function fetchCommonsImage(query) {
   if (!query) return null;
   try {
-    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=6&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*`;
+    const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrnamespace=6&gsrsearch=${encodeURIComponent(query)}&gsrlimit=8&prop=imageinfo&iiprop=url&iiurlwidth=640&format=json&origin=*`;
     const data = await safeJson(url);
     const pages = Object.values(data.query?.pages || {});
+    // Commons renders a .jpg/.png *preview* even for PDFs, SVGs, DjVu scans, etc.,
+    // so the thumbnail URL's extension isn't a reliable signal — check the source
+    // file's own title instead (e.g. "File:Foo.jpg" vs "File:Old_Book_Scan.pdf").
     const photos = pages
-      .map(p => p.imageinfo?.[0]?.thumburl)
-      .filter(u => u && /\.(jpe?g|png)(\?|$)/i.test(u));
+      .filter(p => p.title && /\.(jpe?g|png)$/i.test(p.title) && p.imageinfo?.[0]?.thumburl)
+      .map(p => p.imageinfo[0].thumburl);
     if (!photos.length) return null;
     return pick(photos);
   } catch {

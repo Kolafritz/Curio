@@ -1,7 +1,7 @@
 // app.js — wires the topic drawer, persisted preferences, and feed together.
 
 import { TOPICS, addCustomTopic, removeCustomTopic } from './topics.js';
-import { initFeed, startFeed, setActiveTopics, renderCard, getPinnedCards } from './feed.js';
+import { initFeed, startFeed, setActiveTopics, renderCard, getPinnedCards, surpriseMe } from './feed.js';
 
 const ACTIVE_KEY = 'curio_active_topics_v1';
 const THEME_KEY = 'curio_theme_v1';
@@ -14,6 +14,7 @@ const topicList = document.getElementById('topicList');
 const toastEl = document.getElementById('toast');
 const savedListEl = document.getElementById('savedList');
 const savedEmptyEl = document.getElementById('savedEmpty');
+const savedSearchEl = document.getElementById('savedSearch');
 const themeToggle = document.getElementById('themeToggle');
 const dock = document.getElementById('dock');
 const views = document.querySelectorAll('.view');
@@ -64,7 +65,11 @@ function switchView(name) {
     if (btn.dataset.view === name) btn.setAttribute('aria-current', 'page');
     else btn.removeAttribute('aria-current');
   }
-  if (name === 'savedView') renderSavedList();
+  if (name === 'savedView') {
+    savedSearchEl.value = '';
+    savedQuery = '';
+    renderSavedList();
+  }
 }
 dock.addEventListener('click', (e) => {
   const btn = e.target.closest('.dock-btn');
@@ -73,14 +78,36 @@ dock.addEventListener('click', (e) => {
 
 // ----- saved view -----
 
+let savedQuery = '';
+
+function matchesSavedQuery(card, query) {
+  if (!query) return true;
+  const haystack = `${card.title} ${card.teaser || ''} ${card.body || ''} ${card.meta || ''}`.toLowerCase();
+  return haystack.includes(query);
+}
+
 function renderSavedList() {
   savedListEl.innerHTML = '';
-  const cards = getPinnedCards();
+  const all = getPinnedCards();
+  savedSearchEl.hidden = all.length === 0;
+
+  if (!all.length) {
+    savedListEl.hidden = true;
+    savedEmptyEl.hidden = false;
+    savedEmptyEl.querySelector('h2').textContent = 'Nothing saved yet';
+    savedEmptyEl.querySelector('p').textContent = 'Tap ☆ Save on any card in your feed to keep it here.';
+    return;
+  }
+
+  const cards = all.filter(c => matchesSavedQuery(c, savedQuery));
   if (!cards.length) {
     savedListEl.hidden = true;
     savedEmptyEl.hidden = false;
+    savedEmptyEl.querySelector('h2').textContent = 'No matches';
+    savedEmptyEl.querySelector('p').textContent = `Nothing saved matches "${savedQuery}".`;
     return;
   }
+
   savedListEl.hidden = false;
   savedEmptyEl.hidden = true;
   for (const card of cards) {
@@ -94,14 +121,14 @@ function renderSavedList() {
     const saveBtn = node.querySelector('.action');
     saveBtn?.addEventListener('click', () => {
       if (getPinnedCards().some(c => c.id === card.id)) return;
-      node.remove();
-      if (!savedListEl.querySelector('.card')) {
-        savedListEl.hidden = true;
-        savedEmptyEl.hidden = false;
-      }
+      renderSavedList();
     });
   }
 }
+savedSearchEl.addEventListener('input', () => {
+  savedQuery = savedSearchEl.value.trim().toLowerCase();
+  renderSavedList();
+});
 
 function renderDrawerList() {
   topicList.innerHTML = '';
@@ -219,6 +246,18 @@ drawer.addEventListener('click', (e) => { if (e.target === drawer) { closeDrawer
 // tapping a card's side tab opens the topic drawer (event delegation, cards render dynamically)
 feedEl.addEventListener('click', (e) => {
   if (e.target.closest('.tab')) openDrawer();
+});
+
+// ----- surprise me -----
+
+const surpriseBtn = document.getElementById('surpriseBtn');
+surpriseBtn.addEventListener('click', async () => {
+  if (surpriseBtn.disabled) return;
+  if (document.getElementById('feedView').hidden) switchView('feedView');
+  surpriseBtn.disabled = true;
+  const card = await surpriseMe();
+  surpriseBtn.disabled = false;
+  if (!card) showToast('Trouble finding something new — check your connection');
 });
 
 // ----- boot -----

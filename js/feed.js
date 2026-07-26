@@ -337,3 +337,34 @@ export function setActiveTopics(topicIds) {
 export function getPinnedCards() {
   return Object.values(getPinned());
 }
+
+// ----- surprise me: jump straight to a random card from an active topic -----
+
+function currentCardEl() {
+  const items = [...feedEl.children].filter(
+    (c) => c.classList.contains('card') || c.classList.contains('edition-header')
+  );
+  const scrollTop = feedEl.scrollTop;
+  let current = items[0] || null;
+  for (const item of items) {
+    if (item.offsetTop <= scrollTop + 10) current = item;
+    else break;
+  }
+  return current;
+}
+
+export async function surpriseMe() {
+  if (!activeTopics.length) return null;
+  const topicId = activeTopics[Math.floor(Math.random() * activeTopics.length)];
+  const card = await fetchCardForTopic(topicId);
+  if (!card) return null;
+  const node = renderCard(card);
+  if (!node) return null;
+
+  const current = currentCardEl();
+  if (current && current.nextSibling) current.parentNode.insertBefore(node, current.nextSibling);
+  else feedEl.appendChild(node);
+
+  feedEl.scrollTo({ top: node.offsetTop, behavior: 'smooth' });
+  return card;
+}
