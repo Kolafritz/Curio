@@ -5,7 +5,7 @@
 //   images (mostly Wikipedia thumbnails)   -> cache-first
 //   everything else (e.g. Google Fonts)    -> stale-while-revalidate
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const SHELL_CACHE = `curio-shell-${VERSION}`;
 const RUNTIME_CACHE = `curio-runtime-${VERSION}`;
 const IMAGE_CACHE = `curio-images-${VERSION}`;

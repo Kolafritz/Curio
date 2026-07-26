@@ -2,13 +2,20 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+  // Set the theme before first paint so there's no flash of the wrong palette.
+  try {
+    document.documentElement.dataset.theme =
+      localStorage.getItem('curio_theme_v1') === 'dark' ? 'dark' : 'light';
+  } catch (e) {}
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Curio — a cabinet of curiosities</title>
 <meta name="description" content="A personal feed of philosophy, history, psychology, and more — pulled live from Wikipedia, Wikiquote, and current research, on the topics you choose.">
-<meta name="theme-color" content="#14171a">
+<meta name="theme-color" content="#faf7f0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Curio">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -29,13 +36,56 @@
     </div>
   </header>
 
-  <main id="feed" aria-live="polite"></main>
+  <div class="views">
+    <section id="feedView" class="view">
+      <main id="feed" aria-live="polite"></main>
 
-  <div id="emptyState" class="empty-state" hidden>
-    <h2>Nothing selected yet</h2>
-    <p>Pick a few subjects and cards will start pulling in from Wikipedia, Wikiquote, and current research.</p>
-    <button id="emptyCta" class="btn-primary" type="button">Choose topics</button>
+      <div id="emptyState" class="empty-state" hidden>
+        <h2>Nothing selected yet</h2>
+        <p>Pick a few subjects and cards will start pulling in from Wikipedia, Wikiquote, and current research.</p>
+        <button id="emptyCta" class="btn-primary" type="button">Choose topics</button>
+      </div>
+    </section>
+
+    <section id="savedView" class="view" hidden>
+      <div class="view-head">
+        <h1>Saved</h1>
+        <div class="view-sub">Cards you've kept, ready for offline reading</div>
+      </div>
+      <div id="savedList" class="saved-list"></div>
+      <div id="savedEmpty" class="empty-state" hidden>
+        <h2>Nothing saved yet</h2>
+        <p>Tap ☆ Save on any card in your feed to keep it here.</p>
+      </div>
+    </section>
+
+    <section id="settingsView" class="view" hidden>
+      <div class="view-head">
+        <h1>Settings</h1>
+      </div>
+      <div class="settings-list">
+        <div class="settings-row">
+          <div class="settings-row-text">
+            <div class="settings-row-title">Dark mode</div>
+            <div class="settings-row-sub">Switch between the light and dark palette</div>
+          </div>
+          <button id="themeToggle" class="toggle" type="button" role="switch" aria-checked="false" aria-label="Dark mode"></button>
+        </div>
+      </div>
+    </section>
   </div>
+
+  <nav id="dock" class="dock" aria-label="Primary">
+    <button class="dock-btn" data-view="feedView" type="button" aria-current="page">
+      <span class="dock-icon">⌂</span><span class="dock-label">Feed</span>
+    </button>
+    <button class="dock-btn" data-view="savedView" type="button">
+      <span class="dock-icon">★</span><span class="dock-label">Saved</span>
+    </button>
+    <button class="dock-btn" data-view="settingsView" type="button">
+      <span class="dock-icon">⚙</span><span class="dock-label">Settings</span>
+    </button>
+  </nav>
 </div>
 
 <div id="drawer" aria-hidden="true">

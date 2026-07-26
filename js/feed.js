@@ -132,6 +132,7 @@ function buildActions(card, faceEl) {
 function buildDirectCard(card, topic) {
   const wrap = el('div', 'card');
   wrap.dataset.topic = topic.id;
+  wrap.dataset.cardId = card.id;
 
   const tab = el('div', 'tab', `${topic.glyph} ${topic.short}`);
   tab.style.background = topic.ink;
@@ -157,6 +158,7 @@ function buildDirectCard(card, topic) {
 function buildFlipCard(card, topic) {
   const wrap = el('div', 'card');
   wrap.dataset.topic = topic.id;
+  wrap.dataset.cardId = card.id;
 
   const tab = el('div', 'tab', `${topic.glyph} ${topic.short}`);
   tab.style.background = topic.ink;
@@ -200,7 +202,7 @@ function buildFlipCard(card, topic) {
   return wrap;
 }
 
-function renderCard(card) {
+export function renderCard(card) {
   const topic = TOPIC_MAP[card.topicId];
   if (!topic) return null;
   return card.mode === 'flip' ? buildFlipCard(card, topic) : buildDirectCard(card, topic);

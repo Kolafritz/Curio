@@ -4,6 +4,30 @@
    flip to reveal the fuller note on the back. */
 
 :root {
+  /* light theme (default) */
+  --bg: #faf7f0;
+  --surface: #ffffff;
+  --surface-raised: #f1ece0;
+  --text: #211e19;
+  --text-dim: #6f6a5c;
+  --text-faint: #9d9686;
+  --border: rgba(33, 30, 25, 0.08);
+  --border-strong: rgba(33, 30, 25, 0.14);
+  --shadow: 0 16px 40px rgba(33, 30, 25, 0.12);
+  --topbar-fade: rgba(250, 247, 240, 0.86);
+  --icon-btn-bg: rgba(255, 255, 255, 0.65);
+  --selection: rgba(33, 30, 25, 0.12);
+  --toggle-active-bg: rgba(33, 30, 25, 0.14);
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Libre Franklin', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+:root[data-theme="dark"] {
   --bg: #14171a;
   --surface: #1b1f23;
   --surface-raised: #21262b;
@@ -13,13 +37,10 @@
   --border: rgba(237, 234, 226, 0.09);
   --border-strong: rgba(237, 234, 226, 0.16);
   --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Libre Franklin', -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-
-  --safe-top: env(safe-area-inset-top, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --topbar-fade: rgba(10, 12, 14, 0.75);
+  --icon-btn-bg: rgba(20, 23, 26, 0.55);
+  --selection: rgba(237, 234, 226, 0.22);
+  --toggle-active-bg: rgba(237, 234, 226, 0.22);
 }
 
 * { box-sizing: border-box; }
@@ -34,6 +55,7 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
@@ -67,7 +89,7 @@ button {
   top: 0; left: 0; right: 0;
   z-index: 30;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(10,12,14,0.75), transparent);
+  background: linear-gradient(to bottom, var(--topbar-fade), transparent);
 }
 .topbar > * { pointer-events: auto; }
 .brand {
@@ -92,23 +114,82 @@ button {
   width: 40px; height: 40px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(20, 23, 26, 0.55);
+  background: var(--icon-btn-bg);
   border: 1px solid var(--border-strong);
   backdrop-filter: blur(6px);
   font-size: 1.05rem;
+  color: var(--text);
 }
 .icon-btn:active { transform: scale(0.94); }
+
+/* ===== Views + bottom dock ===== */
+
+.views {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+.view {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.view-head {
+  padding: calc(var(--safe-top) + 64px) 20px 16px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+.view-head h1 {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0;
+}
+.view-sub {
+  font-size: 0.88rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.dock {
+  flex-shrink: 0;
+  display: flex;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  padding-bottom: var(--safe-bottom);
+}
+.dock-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 0 8px;
+  color: var(--text-faint);
+}
+.dock-icon { font-size: 1.2rem; line-height: 1; }
+.dock-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.dock-btn[aria-current="page"] { color: var(--text); }
+.dock-btn:active { transform: scale(0.96); }
 
 /* ===== Feed ===== */
 
 #feed {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
 }
 .card {
-  height: 100dvh;
+  height: 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
   position: relative;
@@ -292,7 +373,7 @@ button {
 /* ===== Today's Edition masthead + divider ===== */
 
 .edition-header {
-  height: 100dvh;
+  height: 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
   display: flex;
@@ -366,7 +447,7 @@ button {
 /* ===== Loading / empty states ===== */
 
 .skeleton {
-  height: 100dvh;
+  height: 100%;
   scroll-snap-align: start;
   display: flex; align-items: center; justify-content: center;
   color: var(--text-faint);
@@ -386,7 +467,8 @@ button {
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .empty-state {
-  height: 100dvh;
+  flex: 1;
+  min-height: 0;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center;
   padding: 40px;
@@ -488,7 +570,7 @@ button {
   top: 3px; left: 3px;
   transition: left 0.15s ease, background 0.15s ease;
 }
-.topic-row.active .toggle { background: rgba(237,234,226,0.22); }
+.topic-row.active .toggle { background: var(--toggle-active-bg); }
 .topic-row.active .toggle::after { left: 19px; background: var(--text); }
 
 .topic-delete {
@@ -568,5 +650,56 @@ button {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-::selection { background: rgba(237,234,226,0.22); }
+::selection { background: var(--selection); }
 :focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* ===== Saved view ===== */
+
+.saved-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+.saved-list .card { height: 100%; }
+
+/* ===== Settings view ===== */
+
+.settings-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-row-text { flex: 1; }
+.settings-row-title { font-size: 0.96rem; }
+.settings-row-sub { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+
+/* standalone version of the drawer's toggle pill, for settings rows */
+.settings-row .toggle {
+  width: 40px; height: 24px;
+  border-radius: 100px;
+  background: var(--border-strong);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.settings-row .toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  top: 3px; left: 3px;
+  transition: left 0.15s ease, background 0.15s ease;
+}
+.settings-row .toggle[aria-checked="true"] { background: var(--toggle-active-bg); }
+.settings-row .toggle[aria-checked="true"]::after { left: 19px; background: var(--text); }

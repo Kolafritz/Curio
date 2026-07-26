@@ -1,15 +1,22 @@
 // app.js — wires the topic drawer, persisted preferences, and feed together.
 
 import { TOPICS, addCustomTopic, removeCustomTopic } from './topics.js';
-import { initFeed, startFeed, setActiveTopics } from './feed.js';
+import { initFeed, startFeed, setActiveTopics, renderCard, getPinnedCards } from './feed.js';
 
 const ACTIVE_KEY = 'curio_active_topics_v1';
+const THEME_KEY = 'curio_theme_v1';
+const THEME_COLORS = { light: '#faf7f0', dark: '#14171a' };
 
 const feedEl = document.getElementById('feed');
 const emptyState = document.getElementById('emptyState');
 const drawer = document.getElementById('drawer');
 const topicList = document.getElementById('topicList');
 const toastEl = document.getElementById('toast');
+const savedListEl = document.getElementById('savedList');
+const savedEmptyEl = document.getElementById('savedEmpty');
+const themeToggle = document.getElementById('themeToggle');
+const dock = document.getElementById('dock');
+const views = document.querySelectorAll('.view');
 
 function loadActive() {
   try {
@@ -29,6 +36,71 @@ function showToast(msg) {
   toastEl.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2600);
+}
+
+// ----- theme -----
+
+function loadTheme() {
+  try { return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; }
+  catch { return 'light'; }
+}
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', THEME_COLORS[theme]);
+  themeToggle.setAttribute('aria-checked', theme === 'dark' ? 'true' : 'false');
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+}
+themeToggle.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+});
+applyTheme(loadTheme());
+
+// ----- bottom dock / view switching -----
+
+function switchView(name) {
+  for (const view of views) view.hidden = view.id !== name;
+  for (const btn of dock.querySelectorAll('.dock-btn')) {
+    if (btn.dataset.view === name) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
+  }
+  if (name === 'savedView') renderSavedList();
+}
+dock.addEventListener('click', (e) => {
+  const btn = e.target.closest('.dock-btn');
+  if (btn) switchView(btn.dataset.view);
+});
+
+// ----- saved view -----
+
+function renderSavedList() {
+  savedListEl.innerHTML = '';
+  const cards = getPinnedCards();
+  if (!cards.length) {
+    savedListEl.hidden = true;
+    savedEmptyEl.hidden = false;
+    return;
+  }
+  savedListEl.hidden = false;
+  savedEmptyEl.hidden = true;
+  for (const card of cards) {
+    const node = renderCard(card);
+    if (!node) continue;
+    savedListEl.appendChild(node);
+    // buildActions' save button calls stopPropagation(), so a listener on
+    // #savedList would never see the click — attach directly to the button
+    // instead, where it runs right after the toggle (same element, so
+    // stopPropagation doesn't affect listener order here).
+    const saveBtn = node.querySelector('.action');
+    saveBtn?.addEventListener('click', () => {
+      if (getPinnedCards().some(c => c.id === card.id)) return;
+      node.remove();
+      if (!savedListEl.querySelector('.card')) {
+        savedListEl.hidden = true;
+        savedEmptyEl.hidden = false;
+      }
+    });
+  }
 }
 
 function renderDrawerList() {
