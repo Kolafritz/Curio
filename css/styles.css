@@ -24,6 +24,10 @@
 
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
+/* Without this, any class below that sets its own `display` (e.g. .empty-state,
+   .icon-btn) silently outranks the browser's default [hidden] rule, since an
+   author-stylesheet rule always wins over the user-agent one at equal specificity. */
+[hidden] { display: none !important; }
 body {
   background: var(--bg);
   color: var(--text);
