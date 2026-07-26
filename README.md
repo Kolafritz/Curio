@@ -2,8 +2,7 @@
 
 A personal, installable feed app: vertical card-by-card scrolling like a social
 app, but every card is real content on topics you chose — pulled live from
-Wikipedia, Wikiquote, Wikipedia's On This Day feed, and Semantic Scholar's
-research index. Nothing is pre-written into the app; it's fetched fresh each
+public sources. Nothing is pre-written into the app; it's fetched fresh each
 time you scroll.
 
 ## Deploying it (pick one, all free)
