@@ -18,6 +18,7 @@ const savedSearchEl = document.getElementById('savedSearch');
 const themeToggle = document.getElementById('themeToggle');
 const dock = document.getElementById('dock');
 const views = document.querySelectorAll('.view');
+const toTopBtn = document.getElementById('toTopBtn');
 
 function loadActive() {
   try {
@@ -70,10 +71,26 @@ function switchView(name) {
     savedQuery = '';
     renderSavedList();
   }
+  updateToTopVisibility();
 }
 dock.addEventListener('click', (e) => {
   const btn = e.target.closest('.dock-btn');
   if (btn) switchView(btn.dataset.view);
+});
+
+// ----- back to top -----
+
+function activeScroller() {
+  return savedListEl.closest('.view').hidden ? feedEl : savedListEl;
+}
+function updateToTopVisibility() {
+  const scroller = activeScroller();
+  toTopBtn.classList.toggle('show', scroller.scrollTop > window.innerHeight * 0.75);
+}
+feedEl.addEventListener('scroll', updateToTopVisibility, { passive: true });
+savedListEl.addEventListener('scroll', updateToTopVisibility, { passive: true });
+toTopBtn.addEventListener('click', () => {
+  activeScroller().scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 // ----- saved view -----
