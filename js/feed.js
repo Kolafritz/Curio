@@ -54,26 +54,46 @@ function el(tag, cls, text) {
   return n;
 }
 
+function buildPlate(topic) {
+  const plate = el('div', 'plate');
+  plate.style.setProperty('--ink', topic.ink);
+  plate.appendChild(el('div', 'glyph', topic.glyph));
+  return plate;
+}
+
 function buildMedia(card, topic) {
   const media = el('div', 'media');
-  if (card.image) {
-    const img = el('img');
-    img.src = card.image;
-    img.loading = 'lazy';
-    img.alt = card.title;
-    media.appendChild(img);
-    media.appendChild(el('div', 'scrim'));
-  } else {
-    const plate = el('div', 'plate');
-    plate.style.setProperty('--ink', topic.ink);
-    plate.appendChild(el('div', 'glyph', topic.glyph));
-    media.appendChild(plate);
-  }
   const chip = el('div', 'topic-chip');
   const dot = el('span', 'dot');
   dot.style.background = topic.ink;
   chip.appendChild(dot);
   chip.appendChild(document.createTextNode(topic.short));
+
+  if (card.image) {
+    const img = el('img');
+    img.loading = 'lazy';
+    img.alt = card.title;
+    const fallbackToPlate = () => {
+      media.innerHTML = '';
+      media.appendChild(buildPlate(topic));
+      media.appendChild(chip);
+    };
+    // Some sources (e.g. Internet Archive covers) don't reliably have a
+    // thumbnail for every item — fall back to the plate instead of a
+    // broken-image icon.
+    img.addEventListener('error', fallbackToPlate, { once: true });
+    // Internet Archive's img service doesn't 404 on a missing cover — it
+    // redirects (200 OK) to a fixed 160x110 "not found" placeholder, which
+    // would otherwise render as a blurry stretched icon.
+    img.addEventListener('load', () => {
+      if (img.naturalWidth === 160 && img.naturalHeight === 110) fallbackToPlate();
+    }, { once: true });
+    img.src = card.image;
+    media.appendChild(img);
+    media.appendChild(el('div', 'scrim'));
+  } else {
+    media.appendChild(buildPlate(topic));
+  }
   media.appendChild(chip);
   return media;
 }

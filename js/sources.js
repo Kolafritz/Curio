@@ -228,6 +228,125 @@ export async function fetchResearchCard(topic) {
   return fetchWikiCard(topic);
 }
 
+// ---------- Internet Archive (public-domain texts, any topic) ----------
+
+function normalizeArchiveDescription(desc) {
+  if (Array.isArray(desc)) return desc.join(' ');
+  return desc || '';
+}
+
+export async function fetchArchiveCard(topic) {
+  const term = pick(topic.seeds);
+  const params = new URLSearchParams();
+  // Restricted to title/subject rather than full-text — an unrestricted query
+  // matches incidental OCR mentions buried in unrelated scanned documents.
+  params.set('q', `(title:(${term}) OR subject:(${term})) AND mediatype:texts`);
+  params.append('fl[]', 'identifier');
+  params.append('fl[]', 'title');
+  params.append('fl[]', 'description');
+  params.append('fl[]', 'creator');
+  params.append('sort[]', 'downloads desc');
+  params.set('rows', '10');
+  params.set('output', 'json');
+  const url = `https://archive.org/advancedsearch.php?${params.toString()}`;
+
+  const data = await safeJson(url);
+  const docs = (data.response?.docs || [])
+    .map(d => ({ ...d, description: normalizeArchiveDescription(d.description) }))
+    .filter(d => d.identifier && d.title && d.description.length > 60);
+  const fresh = docs.filter(d => !isSeen('ia:' + d.identifier));
+  const doc = pick(fresh.length ? fresh : docs);
+  if (!doc) return null;
+  markSeen('ia:' + doc.identifier);
+
+  const body = doc.description.length > 500 ? doc.description.slice(0, 500) + '…' : doc.description;
+  const creator = Array.isArray(doc.creator) ? doc.creator[0] : doc.creator;
+
+  return {
+    id: uid(),
+    topicId: topic.id,
+    mode: 'direct',
+    title: doc.title,
+    teaser: body.split(/(?<=[.!?])\s+/)[0],
+    body,
+    image: `https://archive.org/services/img/${doc.identifier}`,
+    sourceLabel: 'Internet Archive' + (creator ? ' — ' + creator : ''),
+    sourceUrl: `https://archive.org/details/${doc.identifier}`,
+    meta: ''
+  };
+}
+
+// ---------- PubMed (nutrition/health research) ----------
+
+async function pubmedSearchIds(term, limit = 8) {
+  const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${encodeURIComponent(term)}&retmode=json&retmax=${limit}&sort=relevance`;
+  const data = await safeJson(url);
+  return data.esearchresult?.idlist || [];
+}
+
+async function pubmedFetchArticle(id) {
+  const url = `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id=${id}&rettype=abstract&retmode=xml`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('bad response ' + res.status);
+  const xmlText = await res.text();
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  const article = doc.querySelector('PubmedArticle');
+  if (!article) return null;
+
+  const title = article.querySelector('ArticleTitle')?.textContent?.trim();
+  const abstract = [...article.querySelectorAll('AbstractText')].map(n => n.textContent.trim()).join(' ');
+  if (!title || !abstract) return null;
+
+  const year = article.querySelector('PubDate Year')?.textContent
+    || article.querySelector('PubDate MedlineDate')?.textContent?.slice(0, 4) || '';
+  const journal = article.querySelector('Journal Title')?.textContent || '';
+  const authors = [...article.querySelectorAll('Author')].slice(0, 3)
+    .map(a => a.querySelector('LastName')?.textContent).filter(Boolean).join(', ');
+
+  return { pmid: article.querySelector('PMID')?.textContent, title, abstract, year, journal, authors };
+}
+
+async function pubmedCard(topic) {
+  const term = pick(topic.researchTerms);
+  const ids = await pubmedSearchIds(term);
+  const fresh = ids.filter(id => !isSeen('pm:' + id));
+  const tryIds = (fresh.length ? fresh : ids).slice(0, 5);
+
+  for (const id of tryIds) {
+    try {
+      const art = await pubmedFetchArticle(id);
+      if (!art || art.abstract.length < 80) continue;
+      markSeen('pm:' + id);
+      const abstract = art.abstract.length > 500 ? art.abstract.slice(0, 500) + '…' : art.abstract;
+      return {
+        id: uid(),
+        topicId: topic.id,
+        mode: 'direct',
+        title: art.title,
+        teaser: abstract.split(/(?<=[.!?])\s+/)[0],
+        body: abstract,
+        image: await fetchCommonsImage(term),
+        sourceLabel: 'PubMed' + (art.journal ? ' — ' + art.journal : ''),
+        sourceUrl: art.pmid ? `https://pubmed.ncbi.nlm.nih.gov/${art.pmid}/` : null,
+        meta: `${art.authors}${art.year ? ' · ' + art.year : ''}`
+      };
+    } catch { /* try the next candidate id */ }
+  }
+  return null;
+}
+
+export async function fetchNutritionCard(topic) {
+  // Mostly grounded concept explainers, occasionally a real peer-reviewed abstract.
+  const useResearch = Math.random() < 0.35;
+  if (useResearch) {
+    try {
+      const card = await pubmedCard(topic);
+      if (card) return card;
+    } catch { /* fall through to Wikipedia */ }
+  }
+  return fetchWikiCard(topic);
+}
+
 // ---------- Curated vocab (German / Korean) ----------
 
 async function vocabCard(topic, list) {
@@ -263,10 +382,17 @@ export async function fetchCardForTopic(topicId) {
   const topic = TOPIC_MAP[topicId];
   if (!topic) return null;
   try {
+    // Internet Archive covers every topic (public-domain books, old photos,
+    // historical documents) — occasionally try it before the topic's own kind.
+    if (Math.random() < 0.15) {
+      const archiveCard = await fetchArchiveCard(topic);
+      if (archiveCard) return archiveCard;
+    }
     switch (topic.kind) {
       case 'onthisday': return (await fetchOnThisDayCard(topic)) || (await fetchWikiCard(topic));
       case 'stoic-quote': return await fetchStoicCard(topic);
       case 'mixed-research': return (await fetchResearchCard(topic)) || null;
+      case 'mixed-nutrition': return (await fetchNutritionCard(topic)) || null;
       case 'vocab-de':
       case 'vocab-ko': return await fetchVocabCard(topic);
       default: return await fetchWikiCard(topic);

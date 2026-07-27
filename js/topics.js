@@ -146,7 +146,7 @@ export const TOPICS = [
     short: 'Nutrition',
     ink: '#6B8E4E',
     glyph: '⚗',
-    kind: 'mixed-research',
+    kind: 'mixed-nutrition',
     seeds: ['Flexible dieting', 'If It Fits Your Macros', 'Nutrient timing', 'Macronutrient',
       'Caloric deficit', 'Protein (nutrient)', 'Dietary fiber', 'Sports nutrition',
       'Diet quality', 'Intuitive eating', 'Meal frequency', 'Micronutrient'],

@@ -5,7 +5,7 @@
 //   images (mostly Wikipedia thumbnails)   -> cache-first
 //   everything else (e.g. Google Fonts)    -> stale-while-revalidate
 
-const VERSION = 'v13';
+const VERSION = 'v15';
 const SHELL_CACHE = `curio-shell-${VERSION}`;
 const RUNTIME_CACHE = `curio-runtime-${VERSION}`;
 const IMAGE_CACHE = `curio-images-${VERSION}`;
@@ -46,7 +46,9 @@ function isApiRequest(url) {
   return /(^|\.)wikipedia\.org$/.test(url.hostname)
     || /(^|\.)wikiquote\.org$/.test(url.hostname)
     || /(^|\.)wikimedia\.org$/.test(url.hostname)
-    || /(^|\.)semanticscholar\.org$/.test(url.hostname);
+    || /(^|\.)semanticscholar\.org$/.test(url.hostname)
+    || /(^|\.)archive\.org$/.test(url.hostname)
+    || /(^|\.)ncbi\.nlm\.nih\.gov$/.test(url.hostname);
 }
 
 self.addEventListener('fetch', (event) => {
